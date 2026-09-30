@@ -25,13 +25,20 @@ jobs:
       run: |
         uname -m
         test "$(uname -m)" = "${{ matrix.arch }}"
+    # Use setup-python rather than Homebrew's python: the Intel runner image
+    # ships a python.org framework whose /usr/local/bin links make
+    # `brew install python@3.12` fail at the link step.
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
     - name: Install dependencies
       run: |
-        brew install libtool autoconf automake help2man python@3.12 python-setuptools cython flex texinfo gettext m4 gnu-tar
+        python -m pip install setuptools cython
+        brew install libtool autoconf automake help2man flex texinfo gettext m4 gnu-tar
         # Homebrew lives in /opt/homebrew on Apple silicon and /usr/local on
         # Intel, so derive every path from brew --prefix.
         prefix=$(brew --prefix)
-        echo "$prefix/opt/gnu-tar/libexec/gnubin:$prefix/opt/flex/bin:$prefix/opt/m4/bin:$prefix/opt/texinfo/bin:$prefix/opt/gettext/bin:$prefix/opt/python@3.12/libexec/bin:$prefix/opt/cython/bin" >> $GITHUB_PATH
+        echo "$prefix/opt/gnu-tar/libexec/gnubin:$prefix/opt/flex/bin:$prefix/opt/m4/bin:$prefix/opt/texinfo/bin:$prefix/opt/gettext/bin" >> $GITHUB_PATH
         echo "LDFLAGS=-L$prefix/opt/flex/lib -L$prefix/opt/gettext/lib" >> $GITHUB_ENV
         echo "CPPFLAGS=-I$prefix/opt/flex/include" >> $GITHUB_ENV
     - name: Bootstrap and configure
